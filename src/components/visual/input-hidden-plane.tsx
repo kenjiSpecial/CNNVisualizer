@@ -1,11 +1,5 @@
-import React, { useEffect, useMemo, useRef } from 'react';
-import {
-  PlaneBufferGeometry,
-  ShaderMaterial,
-  BufferAttribute,
-  DoubleSide,
-  Vector3,
-} from 'three';
+import { useEffect, useMemo, useRef } from 'react';
+import { BufferAttribute, DoubleSide, Vector3 } from 'three';
 
 type InputPlanePlaneProps = JSX.IntrinsicElements['mesh'] & {
   inputData: number[];

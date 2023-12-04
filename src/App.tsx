@@ -3,18 +3,10 @@ import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import './App.css';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Stats } from '@react-three/drei';
-import { MathUtils, Vector3 } from 'three';
-import Matrix from 'ml-matrix';
-import { calcSigmoid, calcSoftMax } from './components/visual/functions';
+import { Vector3 } from 'three';
 import { CanvasDrawing } from './components/visual/Canvas-drawing';
 import { ministSampleData } from './components/visual/mnist-sample';
 import { useWindowSize } from './components/visual/use-window-size';
-import {
-  DrawLineGroup,
-  OutputMeshGroup,
-  ParamsPixelPlaneMesh,
-  PixelPlaneMesh,
-} from './components/visual/pixel-plane-mesh';
 import { InputHiddenPlane } from './components/visual/input-hidden-plane';
 
 function App() {
@@ -33,20 +25,20 @@ function App() {
   const inputRowSize = 28;
   const inputColSize = 28;
 
-  const hiddenSize = 50;
-  const hiddenRowSize = 10;
-  const hiddenColSize = 5;
-  const outputSize = 10;
-  const outputRowSize = 3;
-  const outputColSize = 4;
+  // const hiddenSize = 50;
+  // const hiddenRowSize = 10;
+  // const hiddenColSize = 5;
+  // const outputSize = 10;
+  // const outputRowSize = 3;
+  // const outputColSize = 4;
 
   const inputPlane = { size: 1 / 10, space: 0.02 }; // const size = 1 / 14       const space = 0.02;
-  const hiddenPlane = { size: 0.3, space: 0.1 };
-  const outputPlane = { size: 2, space: 0.3 };
+  // const hiddenPlane = { size: 0.3, space: 0.1 };
+  // const outputPlane = { size: 2, space: 0.3 };
 
   const inputPos = new Vector3(0, 0, 0);
-  const hiddenPos = new Vector3(0, 0, -4);
-  const outputPos = new Vector3(0, 0, -8);
+  // const hiddenPos = new Vector3(0, 0, -4);
+  // const outputPos = new Vector3(0, 0, -8);
 
   const [data, setData] = useState<{
     W1: number[][];
@@ -70,10 +62,10 @@ function App() {
     return isLoading ? 'hidden' : 'flex';
   }, [isLoading]);
 
-  const paramData = useMemo(() => {
-    if (!data) return null;
-    return data;
-  }, [data]);
+  // const paramData = useMemo(() => {
+  //   if (!data) return null;
+  //   return data;
+  // }, [data]);
 
   // インプットとparamsのW1をかけて、バイアスを足す
   // const hiddenValue = useMemo(() => {
