@@ -70,14 +70,19 @@ const Sidebar: React.FC<SidebarProps> = ({
             >
               ゼロから作るDeep Learning
             </a>
-            の第7章の畳み込みニューラルネットワーク(CNN)をリアルタイムに可視化しています。
-          </p>
-          <p>
-            ビジュアライザーでは入力層
+            の第7章の畳み込みニューラルネットワーク(CNN)をリアルタイムに可視化しています。ビジュアライザーでは入力層
             、畳み込み層+プーリング層、全結合層、出力層の4つの層に分けています。
           </p>
           <p>
-            畳み込み層とプーリング層は、畳み込み層の出力をプーリング層に入力することで、画像の特徴を抽出しています。シンプルなニューラルネットワークを可視化したNNビジュアライザーと比較してみると、畳み込みがどのように変化しているかがわかります。
+            畳み込み層とプーリング層では、画像の特徴を抽出しています。シンプルなニューラルネットワークを可視化した
+            <a
+              href="https://ks-nnvisualizer.netlify.app/"
+              className="text-blue-700 underline hover:text-blue-900"
+              target="_blank"
+            >
+              NNビジュアライザー
+            </a>
+            と比較してみると、畳み込みがどのように変化しているかがわかります。
           </p>
 
           <div className="text-right">
@@ -120,7 +125,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           <p>
             スケッチキャンバスにスケッチをするか、画像テストボタンを押してください。自動でニューラルネットワークが推論を行います。
           </p>
-          <p>スケッチは一筆書きになっています。</p>
         </div>
         <div>
           <p className="text-sm sm:text-base text-right">
@@ -134,20 +138,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             </a>
           </p>
           <p></p>
-        </div>
-        <div>
-          <h2 className="text-base sm:text-2xl font-bold mb-2">関連</h2>
-          <ul className="text-sm sm:text-base">
-            <li>
-              <a
-                href="https://ks-nnvisualizer.netlify.app/"
-                className="text-blue-700 underline hover:text-blue-900"
-                target="_blank"
-              >
-                CNNビジュアライザー
-              </a>
-            </li>
-          </ul>
         </div>
       </div>
     </div>
