@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { CanvasDrawing } from '../visual/Canvas-drawing';
 import { IWindowSize } from '../visual/use-window-size';
 
@@ -20,6 +20,18 @@ const Sidebar: React.FC<SidebarProps> = ({
   clickbutton,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
+  // モバイル用のキャプション機能をuseStateで作成する。
+  const [isMobileCaptionOpen, setIsMobileCaptionOpen] = React.useState(false);
+  const displayProp = useMemo(() => {
+    return isMobileCaptionOpen ? 'block' : 'hidden';
+  }, [isMobileCaptionOpen]);
+  const menuText = useMemo(() => {
+    return isMobileCaptionOpen ? '閉じる' : 'CNNビジュアライザーについて';
+  }, [isMobileCaptionOpen]);
+
+  const clickMenuButton = useCallback(() => {
+    setIsMobileCaptionOpen(!isMobileCaptionOpen);
+  }, [isMobileCaptionOpen]);
 
   return (
     <div
@@ -35,12 +47,21 @@ const Sidebar: React.FC<SidebarProps> = ({
     sm:p-8 border-r border-gray-400
 "
     >
-      <div className="hidden sm:block">
-        <div className="text-2xl font-bold mb-2 ">
+      {/* スマホ用ボタンを作成する */}
+      <div className="sm:hidden text-right mb-2 text-xs">
+        <span
+          className="text-blue-700 underline hover:text-blue-900"
+          onClick={clickMenuButton}
+        >
+          [{menuText}]
+        </span>
+      </div>
+      <div className={`${displayProp} sm:block`}>
+        <div className="text-base sm:text-2xl font-bold mb-2 ">
           <p>CNNビジュアライザー</p>
         </div>
 
-        <div className="text-base">
+        <div className="text-xs sm:text-base">
           <p>
             <a
               href="https://amzn.asia/d/fKFUgBV"
