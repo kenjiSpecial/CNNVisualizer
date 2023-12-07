@@ -1,4 +1,4 @@
-# NNビジュアライザー
+# CNNビジュアライザー
 
 [![代替テキスト](./thumbnail.png)](https://ks-cnnvisualizer.netlify.app/)
 URL: https://ks-cnnvisualizer.netlify.app/
