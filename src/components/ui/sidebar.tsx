@@ -37,7 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     >
       <div className="hidden sm:block">
         <div className="text-2xl font-bold mb-2 ">
-          <p>NNビジュアライザー</p>
+          <p>CNNビジュアライザー</p>
         </div>
 
         <div className="text-base">
@@ -49,11 +49,26 @@ const Sidebar: React.FC<SidebarProps> = ({
             >
               ゼロから作るDeep Learning
             </a>
-            の第4章のニューラルネットワークをリアルタイムに可視化しています。
+            の第7章の畳み込みニューラルネットワーク(CNN)をリアルタイムに可視化しています。
           </p>
           <p>
-            入力層756個、隠れ層50個、出力層10個のニューラルネットワークを可視化しています。
+            入力層
+            、畳み込み層+プーリング層、全結合層、出力層の4つの層に分けています。
           </p>
+          <p>
+            畳み込み層とプーリング層は、畳み込み層の出力をプーリング層に入力することで、画像の特徴を抽出しています。シンプルなニューラルネットワークを可視化したNNビジュアライザーと比較してみると、畳み込みがどのように変化しているかがわかります。
+          </p>
+
+          <div className="text-right">
+            参考:{' '}
+            <a
+              href="https://ks-nnvisualizer.netlify.app/"
+              target="_blank"
+              className="text-blue-700 underline hover:text-blue-900"
+            >
+              NNビジュアライザ-
+            </a>
+          </div>
         </div>
       </div>
 
@@ -90,11 +105,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           <p className="text-sm sm:text-base text-right">
             Code:{' '}
             <a
-              href="https://github.com/kenjiSpecial/NNVisualizer"
+              href="https://github.com/kenjiSpecial/CNNVisualizer"
               className="text-blue-700 underline hover:text-blue-900"
               target="_blank"
             >
-              kenjiSpecial/NNVisualizer
+              kenjiSpecial/CNNVisualizer
             </a>
           </p>
           <p></p>
