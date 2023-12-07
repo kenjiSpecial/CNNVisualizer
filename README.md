@@ -1,19 +1,23 @@
 # NNビジュアライザー
 
-[![代替テキスト](./thumbnail.png)](https://ks-nnvisualizer.netlify.app/)
-URL: https://ks-nnvisualizer.netlify.app/
+[![代替テキスト](./thumbnail.png)](https://ks-cnnvisualizer.netlify.app/)
+URL: https://ks-cnnvisualizer.netlify.app/
 
 ## 概要
 
-NNビジュアライザーは、[「ゼロから作るDeep Learning」](https://www.amazon.co.jp/dp/4873117585?ref_=cm_sw_r_cp_ud_dp_D4WTQD6YZC7XPRNG5K9V) で学んだニューラルネットワークのモデル学習で得られたパラメータを視覚化するツールです。
+CNNビジュアライザーは、畳み込みニューラルネットワーク(CNN)を可視化するサイトです。
 
-入力層756個、隠れ層50個、出力層10個のニューラルネットワークを可視化しています。スケッチキャンパスに自分で絵を描いてみると、文字を認識してくれます。
+[「ゼロから作るDeep Learning」](https://www.amazon.co.jp/dp/4873117585?ref_=cm_sw_r_cp_ud_dp_D4WTQD6YZC7XPRNG5K9V) でデモ学習として作り、学習してできたCNNモデルを利用しています。
+
+理論的な説明は[「ゼロから作るDeep Learning」](https://www.amazon.co.jp/dp/4873117585?ref_=cm_sw_r_cp_ud_dp_D4WTQD6YZC7XPRNG5K9V) を読んでいただけると、理解は深まると思います。
+
+CNNビジュアライザーでは入力層、畳み込み層+プーリング層、全結合層、出力層の4つの層に分けています。スケッチキャンパスに自分で絵を描いてみると、文字を認識してくれます。
 
 このプロジェクトは、TypeScript、React、およびReact Three Fiber（r3f）を使用して開発されています。ニューラルネットワークの複雑な構造とそのパラメータを直感的に理解するのに役立ちます。
 
 # プレビュー
 
-プロジェクトのプレビューはこちらからご覧いただけます: https://ks-nnvisualizer.netlify.app/
+プロジェクトのプレビューはこちらからご覧いただけます: https://ks-cnnvisualizer.netlify.app/
 
 ## 開発とビルド
 

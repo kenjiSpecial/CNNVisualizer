@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import './App.css';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Stats } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import { Vector3 } from 'three';
 import { ministSampleData } from './components/visual/mnist-sample';
 import { useWindowSize } from './components/visual/use-window-size';
@@ -191,8 +191,7 @@ function App() {
         <div className={`${displayCanvas} w-full h-2/3 sm:h-screen`}>
           <Canvas camera={{ position: [15, 1, 12] }}>
             <ambientLight />
-            <pointLight position={[5, 5, 5]} />
-            <Stats showPanel={0} className="stats" />
+            <pointLight position={[5, 5, 5]} />s
             <group position={[0, 0, 8]}>
               <InputHiddenPlane
                 inputData={inputData}
@@ -230,7 +229,6 @@ function App() {
                 resultPos={outputPos}
               />
             </group>
-
             <OrbitControls />
           </Canvas>
         </div>
