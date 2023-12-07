@@ -149,10 +149,11 @@ export function InputHiddenPlane(props: InputPlanePlaneProps) {
   // line segments用のdataを作成
   //
 
-  const mat = useMemo(
+  const mat1 = useMemo(
     () => (
       <shaderMaterial
         side={DoubleSide}
+        transparent={true}
         vertexShader={`
         attribute vec3 color;
 
@@ -167,7 +168,34 @@ export function InputHiddenPlane(props: InputPlanePlaneProps) {
         varying vec3 vColor;
 
         void main() {
-          gl_FragColor = vec4(vColor, 1.0);
+          gl_FragColor = vec4(vColor, .95);
+        }
+          `}
+      />
+    ),
+    [],
+  );
+
+  const mat2 = useMemo(
+    () => (
+      <shaderMaterial
+        side={DoubleSide}
+        transparent={true}
+        vertexShader={`
+        attribute vec3 color;
+
+        varying vec3 vColor;
+
+        void main() {
+          vColor = color;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+          `}
+        fragmentShader={`
+        varying vec3 vColor;
+
+        void main() {
+          gl_FragColor = vec4(vColor, .3);
         }
           `}
       />
@@ -199,7 +227,7 @@ export function InputHiddenPlane(props: InputPlanePlaneProps) {
             itemSize={1}
           />
         </bufferGeometry>
-        {mat}
+        {mat1}
       </mesh>
       <mesh>
         <bufferGeometry>
@@ -223,7 +251,7 @@ export function InputHiddenPlane(props: InputPlanePlaneProps) {
             itemSize={1}
           />
         </bufferGeometry>
-        {mat}
+        {mat1}
       </mesh>
       <mesh>
         <bufferGeometry>
@@ -247,7 +275,7 @@ export function InputHiddenPlane(props: InputPlanePlaneProps) {
             itemSize={1}
           />
         </bufferGeometry>
-        {mat}
+        {mat2}
       </mesh>
     </group>
   );

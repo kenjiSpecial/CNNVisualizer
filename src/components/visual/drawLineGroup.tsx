@@ -221,7 +221,6 @@ export function DrawLineGroup(props: DrawLineGroupProps) {
 
     // hidden -> outputの線を引く。
     for (let outputIndex = 0; outputIndex < resultPlane.num; outputIndex++) {
-      console.log(outputIndex);
       const theta = (outputIndex * Math.PI) / 5 - Math.PI / 2;
       const rad = 8;
       const x = Math.cos(theta) * rad;

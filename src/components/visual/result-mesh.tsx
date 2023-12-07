@@ -33,7 +33,8 @@ export function ResultMesh(props: ResultMeshProps) {
           : 0.05;
       textArr.push(
         <Text
-          color={'0xffffff'}
+          key={`text-${i}`}
+          color={'white'}
           fontSize={fontSize}
           position={pos}
         >{`${i}`}</Text>,
