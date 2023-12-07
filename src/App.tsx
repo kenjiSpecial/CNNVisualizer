@@ -4,10 +4,21 @@ import './App.css';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Stats } from '@react-three/drei';
 import { Vector3 } from 'three';
-import { CanvasDrawing } from './components/visual/Canvas-drawing';
 import { ministSampleData } from './components/visual/mnist-sample';
 import { useWindowSize } from './components/visual/use-window-size';
 import { InputHiddenPlane } from './components/visual/input-hidden-plane';
+import {
+  useCovolutionMemo,
+  usePoolingMemo,
+} from './components/neuralnet/covolution';
+import {
+  calcAffine,
+  calcRelu2DArray,
+  reshapeArray,
+} from './components/neuralnet/functions';
+import Sidebar from './components/ui/sidebar';
+import { ResultMesh } from './components/visual/result-mesh';
+import { DrawLineGroup } from './components/visual/drawLineGroup';
 
 function App() {
   const autoNumCntRef = useRef(
@@ -18,30 +29,59 @@ function App() {
   const [inputData, setInputData] = useState<number[]>(
     ministSampleData[autoNumCntRef.current],
   );
-  const ref = useRef<HTMLDivElement>(null);
   const windowSize = useWindowSize();
 
   const inputSize = 28 * 28;
   const inputRowSize = 28;
   const inputColSize = 28;
 
-  // const hiddenSize = 50;
-  // const hiddenRowSize = 10;
-  // const hiddenColSize = 5;
-  // const outputSize = 10;
-  // const outputRowSize = 3;
-  // const outputColSize = 4;
+  // covolutionのパラメータ
+  const filterNum = 30;
+  const filterRowSize = 5;
+  const filterColSize = 5;
+  const covolutionStride = 1;
+  const covolutionPadding = 0;
 
   const inputPlane = { size: 1 / 10, space: 0.02 }; // const size = 1 / 14       const space = 0.02;
-  // const hiddenPlane = { size: 0.3, space: 0.1 };
-  // const outputPlane = { size: 2, space: 0.3 };
+  const covolutionPlane = {
+    size: 1.2,
+    space: 0.1,
+    divide: 24,
+    num: 30,
+    row: 5,
+    col: 6,
+  };
+  const poolingPlane = {
+    size: 1.8,
+    space: 0.2,
+    divide: 12,
+    num: 30,
+    row: 6,
+    col: 5,
+  };
+  const hiddenPlane = {
+    size: 0.4,
+    space: 0.15,
+    num: 100,
+    row: 10,
+    col: 10,
+  };
+  const outputPlane = {
+    size: 0.3,
+    space: 0.1,
+    num: 10,
+    row: 2,
+    col: 5,
+  };
 
   const inputPos = new Vector3(0, 0, 0);
-  // const hiddenPos = new Vector3(0, 0, -4);
-  // const outputPos = new Vector3(0, 0, -8);
+  const covolutionPos = new Vector3(0, 0, -0.5);
+  const poolingPos = new Vector3(0, 0, -0.5);
+  const hiddenPos = new Vector3(0, 0, -8);
+  const outputPos = new Vector3(0, 0, -16);
 
-  const [data, setData] = useState<{
-    W1: number[][];
+  const [params, setParams] = useState<{
+    W1: number[][][][];
     b1: number[];
     W2: number[][];
     b2: number[];
@@ -49,9 +89,75 @@ function App() {
     b3: number[];
   } | null>(null);
 
+  // useCovolution + Relu
+  const covolutionData = useCovolutionMemo(
+    [[inputData]],
+    params?.W1,
+    params?.b1,
+    inputRowSize,
+    inputColSize,
+    filterNum,
+    filterRowSize,
+    filterColSize,
+    covolutionPadding,
+    covolutionStride,
+  );
+  const poolingData = usePoolingMemo(covolutionData, 2, 2, 2, 0);
+  const hiddenData = useMemo(() => {
+    if (!poolingData || !params?.W2 || !params?.b2) return undefined;
+    const res = reshapeArray(poolingData);
+    return calcAffine(res, params?.W2, params?.b2);
+  }, [poolingData, params?.W2, params?.b2]);
+  const outputData = useMemo(() => {
+    if (!hiddenData || !params?.W3 || !params?.b3) return undefined;
+    const res = calcRelu2DArray(hiddenData);
+    return calcAffine(res, params?.W3, params?.b3);
+  }, [hiddenData, params?.W3, params?.b3]);
+
+  // result用に使用するデータ
+  // resultMeshに渡すために、softmax関数をかけた結果の配列を作成する。
+  const outputSoftmaxArr = useMemo(() => {
+    if (outputData === undefined) {
+      return undefined;
+    }
+    const result = outputData[0];
+    const max = Math.max(...result);
+    const exp = result.map((x) => Math.exp(x - max));
+    const sumExp = exp.reduce((a, b) => a + b);
+    return exp.map((x) => x / sumExp);
+  }, [outputData]);
+
+  // poolingDataをsigmoidに変換
+  // useMemoでキャッシュ
+  const poolingDataSigmoid = useMemo(() => {
+    if (!poolingData) return undefined;
+
+    const sigmoid = (x: number) => 1 / (1 + Math.exp(-x));
+
+    const result = poolingData.map((data) =>
+      data.map((data) =>
+        data.map((data) => data.map((data) => sigmoid(data) * 2 - 1)),
+      ),
+    );
+
+    return result;
+  }, [poolingData]);
+
+  // hiddenDataをsigmoidに変換
+  // useMemoでキャッシュ
+  const hiddenDataSigmoid = useMemo(() => {
+    if (!hiddenData) return undefined;
+
+    const sigmoid = (x: number) => 1 / (1 + Math.exp(-x));
+
+    const result = hiddenData.map((data) => data.map((data) => sigmoid(data)));
+
+    return result;
+  }, [hiddenData]);
+
   const isLoading = useMemo(() => {
-    return data === null;
-  }, [data]);
+    return params === null;
+  }, [params]);
   const displayLoading = useMemo(() => {
     return isLoading ? 'block' : 'hidden';
   }, [isLoading]);
@@ -62,90 +168,15 @@ function App() {
     return isLoading ? 'hidden' : 'flex';
   }, [isLoading]);
 
-  // const paramData = useMemo(() => {
-  //   if (!data) return null;
-  //   return data;
-  // }, [data]);
-
-  // インプットとparamsのW1をかけて、バイアスを足す
-  // const hiddenValue = useMemo(() => {
-  //   if (!paramData || !inputData) return null;
-
-  //   const inp = new Matrix([inputData]);
-  //   console.log(paramData);
-  //   const wMatrix = new Matrix(paramData.W1);
-  //   const bMatrix = new Matrix([paramData.b1]);
-  //   const res = inp.mmul(wMatrix).add(bMatrix);
-  //   const sigmoidMatrix = calcSigmoid(res);
-  //   return { wMatrix: wMatrix, hiddenValueMatrix: sigmoidMatrix };
-  // }, [paramData, inputData]);
-  // const hiddenValueMatrix = hiddenValue?.hiddenValueMatrix;
-  // const inputHiddenWMatrix = hiddenValue?.wMatrix;
-
-  // const outputValue = useMemo(() => {
-  //   if (!paramData || !hiddenValueMatrix) return null;
-
-  //   const wMatrix = new Matrix(paramData.W2);
-  //   const bMatrix = new Matrix([paramData.b2]);
-  //   const res = hiddenValueMatrix.mmul(wMatrix).add(bMatrix);
-  //   const softMaxMatrix = calcSoftMax(res);
-  //   return { wMatrix: wMatrix, outputValueMatrix: softMaxMatrix };
-  // }, [paramData, hiddenValueMatrix]);
-  // const outputValueMatrix = outputValue?.outputValueMatrix;
-  // const hiddenOutputWMatrix = outputValue?.wMatrix;
-
-  // const paramArr = useMemo(() => {
-  //   if (!hiddenOutputWMatrix || !inputHiddenWMatrix) return null;
-  //   const inputHiddennArr = inputHiddenWMatrix.to1DArray();
-  //   const minInputHiddenVal = Math.min(...inputHiddennArr);
-  //   const maxInputHiddenVal = Math.max(...inputHiddennArr);
-  //   const paramW1Arr = [];
-  //   for (let i = 0; i < inputHiddenWMatrix.rows; i++) {
-  //     const arr = [];
-  //     for (let ii = 0; ii < inputHiddenWMatrix.columns; ii++) {
-  //       arr.push(
-  //         MathUtils.clamp(
-  //           (inputHiddenWMatrix.get(i, ii) - minInputHiddenVal) /
-  //             (maxInputHiddenVal - minInputHiddenVal),
-  //           0,
-  //           1,
-  //         ),
-  //       );
-  //     }
-  //     paramW1Arr.push(arr);
-  //   }
-
-  //   const hiddenOutputArr = hiddenOutputWMatrix.to1DArray();
-  //   const minHiddenOutputVal = Math.min(...hiddenOutputArr);
-  //   const maxHiddenOutputVal = Math.max(...hiddenOutputArr);
-  //   const paramW2Arr = [];
-  //   for (let i = 0; i < hiddenOutputWMatrix.rows; i++) {
-  //     const arr = [];
-  //     for (let ii = 0; ii < hiddenOutputWMatrix.columns; ii++) {
-  //       arr.push(
-  //         MathUtils.clamp(
-  //           (hiddenOutputWMatrix.get(i, ii) - minHiddenOutputVal) /
-  //             (maxHiddenOutputVal - minHiddenOutputVal),
-  //           0,
-  //           1,
-  //         ),
-  //       );
-  //     }
-  //     paramW2Arr.push(arr);
-  //   }
-
-  //   return { paramW1Arr, paramW2Arr };
-  // }, [inputHiddenWMatrix, hiddenOutputWMatrix]);
-
   useEffect(() => {
     fetch('/cnn-params.json')
       .then((res) => res.json())
       .then((data) => {
-        setData(data);
+        setParams(data);
       });
   }, []);
 
-  const clickbutton = useCallback(() => {
+  const clickButton = useCallback(() => {
     autoNumCntRef.current = Math.floor(Math.random() * ministSampleData.length);
     isButtonClicked.current = true;
     setInputData(ministSampleData[autoNumCntRef.current]);
@@ -154,113 +185,45 @@ function App() {
   return (
     <>
       <div
-        className="h-screen  w-screen bg-gradient-to-t from-orange-100 to-blue-400 block cursor-grab "
+        className="h-screen  w-screen bg-gradient-to-t from-slate-900 to-blue-900 block cursor-grab "
         id="canvas"
       >
         <div className={`${displayCanvas} w-full h-2/3 sm:h-screen`}>
-          <Canvas camera={{ position: [2, 2, 8] }}>
+          <Canvas camera={{ position: [15, 1, 12] }}>
             <ambientLight />
             <pointLight position={[5, 5, 5]} />
             <Stats showPanel={0} className="stats" />
-            <InputHiddenPlane
-              inputData={inputData}
-              // paramData={paramData}
-              inputPlane={inputPlane}
-              // hiddenPlane={hiddenPlane}
-              // outputPlane={outputPlane}
-              inputPos={inputPos}
-              // hiddenPos={hiddenPos}
-              // outputPos={outputPos}
-              inputSize={inputSize}
-              inputRowSize={inputRowSize}
-              inputColSize={inputColSize}
-              // hiddenSize={hiddenSize}
-              // hiddenRowSize={hiddenRowSize}
-              // hiddenColSize={hiddenColSize}
-              // outputSize={outputSize}
-              // outputRowSize={outputRowSize}
-              // outputColSize={outputColSize}
-            />
-
-            {/* <group position={[0, 0, 2]}> */}
-            {/*  {inputData ? (
-                <PixelPlaneMesh
-                  renderOrder={4}
-                  position={inputPos}
-                  data={inputData}
-                  size={inputPlane.size}
-                  space={inputPlane.space}
-                  rowSize={inputRowSize}
-                  colSize={inputColsize}
-                />
-              ) : null}
-
-              {hiddenValueMatrix ? (
-                <ParamsPixelPlaneMesh
-                  renderOrder={3}
-                  position={hiddenPos}
-                  hiddenSize={hiddenSize}
-                  hiddenValueArr={hiddenValueMatrix.to1DArray()}
-                  size={hiddenPlane.size}
-                  space={hiddenPlane.space}
-                  rowSize={hiddenRowSize}
-                  colSize={hiddenColSize}
-                />
-              ) : null}
-
-              {outputValueMatrix ? (
-                <OutputMeshGroup
-                  renderOrder={2}
-                  position={outputPos}
-                  outputSize={outputSize}
-                  outputValueArr={outputValueMatrix.to1DArray()}
-                  size={outputPlane.size}
-                  space={outputPlane.space}
-                  rowsize={outputRowSize}
-                  colSize={outputColSize}
-                />
-              ) : null} */}
-            {/* 
-              {inputData &&
-              paramArr &&
-              hiddenValueMatrix &&
-              outputValueMatrix ? (
-                <DrawLineGroup
-                  inputSize={inputSize}
-                  hiddenSize={hiddenSize}
-                  outputSize={outputSize}
-                  inputPos={inputPos}
-                  hiddenPos={hiddenPos}
-                  outputPos={outputPos}
-                  paramW1Arr={paramArr.paramW1Arr}
-                  paramW2Arr={paramArr.paramW2Arr}
-                  input1DArr={inputData}
-                  hidden1DArr={hiddenValueMatrix.to1DArray()}
-                  output1DArr={outputValueMatrix.to1DArray()}
-                  renderOrder={1}
-                  input={
-                    {
-                      size: inputPlane.size,
-                      space: inputPlane.space,
-                      rowSize: inputRowSize,
-                      colSize: inputColsize,
-                    } as drawLineGroup['input']
-                  }
-                  hidden={{
-                    size: hiddenPlane.size,
-                    space: hiddenPlane.space,
-                    rowSize: hiddenRowSize,
-                    colSize: hiddenColSize,
-                  }}
-                  output={{
-                    size: outputPlane.size,
-                    space: outputPlane.space,
-                    rowSize: outputRowSize,
-                    colSize: outputColSize,
-                  }}
-                />
-              ) : null}
-            </group> */}
+            <group position={[0, 0, 8]}>
+              <InputHiddenPlane
+                inputData={inputData}
+                inputPlane={inputPlane}
+                inputPos={inputPos}
+                inputSize={inputSize}
+                inputRowSize={inputRowSize}
+                inputColSize={inputColSize}
+                covolutionData={covolutionData}
+                covolutionPlane={covolutionPlane}
+                covolutionPos={covolutionPos}
+                poolingData={poolingDataSigmoid}
+                poolingPlane={poolingPlane}
+                poolingPos={poolingPos}
+                hiddenData={hiddenDataSigmoid}
+                hiddenPlane={hiddenPlane}
+                hiddenPos={hiddenPos}
+              />
+              <ResultMesh result={outputSoftmaxArr} pos={outputPos} />
+              <DrawLineGroup
+                poolingData={poolingDataSigmoid}
+                poolingPlane={poolingPlane}
+                poolingPos={poolingPos}
+                hiddenData={hiddenDataSigmoid}
+                hiddenPlane={hiddenPlane}
+                hiddenPos={hiddenPos}
+                resultData={outputSoftmaxArr}
+                resultPlane={outputPlane}
+                resultPos={outputPos}
+              />
+            </group>
 
             <OrbitControls />
           </Canvas>
@@ -275,85 +238,14 @@ function App() {
         </div>
       </div>
 
-      <div
-        className="
-          fixed 
-          sm:flex sm:flex-col sm:justify-between 
-          left-0 
-          bottom-0 sm:top-0 
-          sm:h-full 
-          w-full sm:w-96 
-          bg-gray-100 z-10 bg-opacity-50 
-          p-3
-          sm:p-8 border-r border-gray-400
-      "
-      >
-        <div className="hidden sm:block">
-          <div className="text-2xl font-bold mb-2 ">
-            <p>NNビジュアライザー</p>
-          </div>
-
-          <div className="text-base">
-            <p>
-              <a
-                href="https://amzn.asia/d/fKFUgBV"
-                target="_blank"
-                className="text-blue-700 underline hover:text-blue-900"
-              >
-                ゼロから作るDeep Learning
-              </a>
-              の第4章のニューラルネットワークをリアルタイムに可視化しています。
-            </p>
-            <p>
-              入力層756個、隠れ層50個、出力層10個のニューラルネットワークを可視化しています。
-            </p>
-          </div>
-        </div>
-
-        <div className={`${displaySideBar} flex-col justify-end`} ref={ref}>
-          <div className="text-base sm:text-lg font-bold mb-1 sm:mb-2">
-            スケッチキャンバス
-          </div>
-          <div className="mb-2 sm:mb-4">
-            <div className="mb-2">
-              <CanvasDrawing
-                setInputData={setInputData}
-                inputData={inputData}
-                isButtonClicked={isButtonClicked}
-                windowWidth={windowSize.width}
-                parentRef={ref}
-              />
-            </div>
-            <div className="text-left sm:text-right">
-              <button
-                className="bg-blue-500 hover:bg-blue-700 text-sm sm:text-base text-white font-bold py-2 px-4 rounded"
-                onClick={clickbutton}
-              >
-                画像テスト
-              </button>
-            </div>
-          </div>
-          <div className="text-xs sm:text-base mb-2 sm:mb-4 block">
-            <p>
-              スケッチキャンバスにスケッチをするか、画像テストボタンを押してください。自動でニューラルネットワークが推論を行います。
-            </p>
-            <p>スケッチは一筆書きになっています。</p>
-          </div>
-          <div>
-            <p className="text-sm sm:text-base text-right">
-              Code:{' '}
-              <a
-                href="https://github.com/kenjiSpecial/NNVisualizer"
-                className="text-blue-700 underline hover:text-blue-900"
-                target="_blank"
-              >
-                kenjiSpecial/NNVisualizer
-              </a>
-            </p>
-            <p></p>
-          </div>
-        </div>
-      </div>
+      <Sidebar
+        displaySideBar={displaySideBar}
+        setInputData={setInputData}
+        inputData={inputData}
+        isButtonClicked={isButtonClicked}
+        windowSize={windowSize}
+        clickbutton={clickButton}
+      />
     </>
   );
 }

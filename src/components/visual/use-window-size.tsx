@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 
 // ウィンドウサイズを表す型定義
-interface WindowSize {
+export interface IWindowSize {
   width: number | undefined;
   height: number | undefined;
 }
 
 // カスタムフックの定義
-export const useWindowSize = (): WindowSize => {
-  const [windowSize, setWindowSize] = useState<WindowSize>({
+export const useWindowSize = (): IWindowSize => {
+  const [windowSize, setWindowSize] = useState<IWindowSize>({
     width: undefined,
     height: undefined,
   });
