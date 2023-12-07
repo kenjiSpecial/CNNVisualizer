@@ -73,7 +73,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             の第7章の畳み込みニューラルネットワーク(CNN)をリアルタイムに可視化しています。
           </p>
           <p>
-            入力層
+            ビジュアライザーでは入力層
             、畳み込み層+プーリング層、全結合層、出力層の4つの層に分けています。
           </p>
           <p>
@@ -134,6 +134,20 @@ const Sidebar: React.FC<SidebarProps> = ({
             </a>
           </p>
           <p></p>
+        </div>
+        <div>
+          <h2 className="text-base sm:text-2xl font-bold mb-2">関連</h2>
+          <ul className="text-sm sm:text-base">
+            <li>
+              <a
+                href="https://ks-nnvisualizer.netlify.app/"
+                className="text-blue-700 underline hover:text-blue-900"
+                target="_blank"
+              >
+                CNNビジュアライザー
+              </a>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
