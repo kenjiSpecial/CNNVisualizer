@@ -2,6 +2,15 @@ import { useMemo, useRef } from 'react';
 import { BufferGeometry, MathUtils, Vector3 } from 'three';
 
 type DrawLineGroupProps = {
+  inputData: number[];
+  inputPlane: {
+    size: number;
+    space: number;
+  };
+  inputPos: Vector3;
+  inputSize: number;
+  inputRowSize: number;
+  inputColSize: number;
   poolingData: number[][][][] | undefined;
   poolingPlane: {
     size: number;
@@ -34,6 +43,11 @@ type DrawLineGroupProps = {
 
 export function DrawLineGroup(props: DrawLineGroupProps) {
   const {
+    inputData,
+    inputPlane,
+    inputPos,
+    inputRowSize,
+    inputColSize,
     poolingData,
     poolingPlane,
     poolingPos,
@@ -45,7 +59,44 @@ export function DrawLineGroup(props: DrawLineGroupProps) {
     resultPos,
   } = props;
   const geometry = useRef<BufferGeometry>(null!);
-  const poolingNumPerUnit = 50;
+  const poolingNumPerUnit = 60;
+  const inputNum = 5000;
+
+  // input -> poolingの線を引く。
+  // inputNum個のobjectを作成し、arrayに入れる。
+  // objectは inputRow 0 - inputRowSize - 1, inputCol 0 - inputColSize の乱数と
+  // divide: {
+  //   row: MathUtils.randInt(0, poolingPlane.divide - 1),
+  //   col: MathUtils.randInt(0, poolingPlane.divide - 1),
+  // },
+  // main: {
+  //   row: MathUtils.randInt(0, poolingPlane.row - 1),
+  //   col: MathUtils.randInt(0, poolingPlane.col - 1),
+  // },
+  // の乱数の2つを持つ。
+  // useMemoを使って、キャッシュする。
+  const inputPairArr = useMemo(() => {
+    const arr = [];
+    for (let i = 0; i < inputNum; i++) {
+      arr.push({
+        input: {
+          row: MathUtils.randInt(0, inputRowSize - 1),
+          col: MathUtils.randInt(0, inputColSize - 1),
+        },
+        pooling: {
+          divide: {
+            row: MathUtils.randInt(0, poolingPlane.divide - 1),
+            col: MathUtils.randInt(0, poolingPlane.divide - 1),
+          },
+          main: {
+            row: MathUtils.randInt(0, poolingPlane.row - 1),
+            col: MathUtils.randInt(0, poolingPlane.col - 1),
+          },
+        },
+      });
+    }
+    return arr;
+  }, []);
 
   // 0 - hiddenPlane.num - 1 に対して それおぞれ poolingNumPerUnit 個のobjectを作成する。
   // objectは 0 - poolingPlane.num - 1 の乱数、 0 - poolingPlane.divide - 1 の乱数、 0 - 1 の乱数を2つ持つ。
@@ -79,6 +130,45 @@ export function DrawLineGroup(props: DrawLineGroupProps) {
 
   const pos = useMemo(() => {
     const arr = [];
+
+    // input -> poolingの線を引く。
+    for (let i = 0; i < inputNum; i++) {
+      const inputObj = inputPairArr[i];
+      const inputPosX =
+        inputPos.x +
+        (inputObj.input.col - (inputColSize - 1) / 2) *
+          (inputPlane.size + inputPlane.space);
+      const inputPosY =
+        inputPos.y -
+        (inputObj.input.row - (inputRowSize - 1) / 2) *
+          (inputPlane.size + inputPlane.space);
+      const inputPosZ = inputPos.z;
+      const poolingObj = inputObj.pooling;
+      const poolGridSize = poolingPlane.size / poolingPlane.divide;
+      const poolingPosX =
+        poolingPos.x +
+        (poolingObj.main.col - (poolingPlane.col - 1) / 2) *
+          (poolingPlane.size + poolingPlane.space) +
+        (poolingObj.divide.col - (poolingPlane.divide - 1) / 2) * poolGridSize +
+        poolGridSize * MathUtils.randFloat(-0.5, 0.5);
+
+      const poolingPosY =
+        poolingPos.y -
+        (poolingObj.main.row - (poolingPlane.row - 1) / 2) *
+          (poolingPlane.size + poolingPlane.space) -
+        (poolingObj.divide.row - (poolingPlane.divide - 1) / 2) * poolGridSize +
+        poolGridSize * MathUtils.randFloat(-0.5, 0.5);
+
+      const poolingPosZ = poolingPos.z;
+      arr.push(
+        inputPosX + inputPlane.size * MathUtils.randFloat(-0.5, 0.5),
+        inputPosY + inputPlane.size * MathUtils.randFloat(-0.5, 0.5),
+        inputPosZ,
+        poolingPosX,
+        poolingPosY,
+        poolingPosZ,
+      );
+    }
 
     // pooling -> hiddenの線を引く。
     for (let hiddenRow = 0; hiddenRow < hiddenPlane.row; hiddenRow++) {
@@ -172,6 +262,35 @@ export function DrawLineGroup(props: DrawLineGroupProps) {
 
   const color = useMemo(() => {
     const colors = [];
+    // input -> poolingのvalueを色として配列に入れる。
+    for (let i = 0; i < inputNum; i++) {
+      const inputObj = inputPairArr[i];
+      const inputIndex = inputObj.input.row * inputRowSize + inputObj.input.col;
+      const inputValue = inputData ? inputData[inputIndex] : 0;
+      const inputColorVal = inputValue;
+      const inputAlphaVal = Math.max(inputValue * 0.5, 0.01);
+      const poolingObj = inputObj.pooling;
+      const poolingIndex =
+        inputObj.pooling.main.row * poolingPlane.col +
+        inputObj.pooling.main.col;
+
+      const poolingColorVal = poolingData
+        ? poolingData[0][poolingIndex][poolingObj.divide.row][
+            poolingObj.divide.col
+          ]
+        : 0;
+      const poolingAlphaVal = Math.max(poolingColorVal * 0.4, 0.01);
+      colors.push(
+        inputColorVal,
+        inputColorVal,
+        inputColorVal,
+        inputAlphaVal,
+        poolingColorVal,
+        poolingColorVal,
+        poolingColorVal,
+        poolingAlphaVal,
+      );
+    }
 
     // pooling -> hiddenのvalueを色として配列に入れる。
     for (let hiddenRow = 0; hiddenRow < hiddenPlane.row; hiddenRow++) {
@@ -231,7 +350,7 @@ export function DrawLineGroup(props: DrawLineGroupProps) {
       geometry.current.attributes.color.needsUpdate = true;
     }
     return new Float32Array(colors);
-  }, [poolingData, hiddenData, resultData]);
+  }, [inputData, poolingData, hiddenData, resultData]);
 
   return (
     <lineSegments>

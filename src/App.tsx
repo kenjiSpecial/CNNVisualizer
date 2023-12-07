@@ -213,6 +213,12 @@ function App() {
               />
               <ResultMesh result={outputSoftmaxArr} pos={outputPos} />
               <DrawLineGroup
+                inputData={inputData}
+                inputPlane={inputPlane}
+                inputPos={inputPos}
+                inputSize={inputSize}
+                inputRowSize={inputRowSize}
+                inputColSize={inputColSize}
                 poolingData={poolingDataSigmoid}
                 poolingPlane={poolingPlane}
                 poolingPos={poolingPos}
