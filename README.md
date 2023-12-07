@@ -48,3 +48,7 @@ vite build
 ## ライセンス
 
 このプロジェクトはMITライセンスの下で公開されています。
+
+## 関連
+
+- [kenjiSpecial/NNVisualizer](https://github.com/kenjiSpecial/NNVisualizer)
